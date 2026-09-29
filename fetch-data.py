@@ -6,7 +6,6 @@ def get_market_data():
     vix_price = "13.50"
     
     try:
-        # Fetching NIFTY 50 price via Yahoo Finance API
         url = "https://query1.finance.yahoo.com/v8/finance/chart/^NSEI?interval=1m&range=1d"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req) as response:
@@ -17,7 +16,6 @@ def get_market_data():
         print(f"Nifty fetch error: {e}")
 
     try:
-        # Fetching INDIA VIX price
         url_vix = "https://query1.finance.yahoo.com/v8/finance/chart/^INDIAVIX?interval=1m&range=1d"
         req_vix = urllib.request.Request(url_vix, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req_vix) as response:
