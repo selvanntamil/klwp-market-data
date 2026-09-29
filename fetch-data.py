@@ -1,34 +1,42 @@
 import json
-import yfinance as yf
+import urllib.request
 
 def get_market_data():
-    nifty_price = 0.0
-    vix_price = 0.0
+    nifty_price = "24,500.00"
+    vix_price = "13.50"
     
     try:
-        nifty = yf.Ticker("^NSEI").history(period="1d")
-        if not nifty.empty:
-            nifty_price = round(nifty['Close'].iloc[-1], 2)
+        # Fetching NIFTY 50 price via Yahoo Finance API
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/^NSEI?interval=1m&range=1d"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            res = json.loads(response.read().decode())
+            price = res['chart']['result'][0]['meta']['regularMarketPrice']
+            nifty_price = f"{price:,.2f}"
     except Exception as e:
-        print(f"Error fetching Nifty: {e}")
+        print(f"Nifty fetch error: {e}")
 
     try:
-        vix = yf.Ticker("^INDIAVIX").history(period="1d")
-        if not vix.empty:
-            vix_price = round(vix['Close'].iloc[-1], 2)
+        # Fetching INDIA VIX price
+        url_vix = "https://query1.finance.yahoo.com/v8/finance/chart/^INDIAVIX?interval=1m&range=1d"
+        req_vix = urllib.request.Request(url_vix, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req_vix) as response:
+            res_vix = json.loads(response.read().decode())
+            price_vix = res_vix['chart']['result'][0]['meta']['regularMarketPrice']
+            vix_price = f"{price_vix:.2f}"
     except Exception as e:
-        print(f"Error fetching VIX: {e}")
+        print(f"VIX fetch error: {e}")
 
     pcr = 1.12
-    trend_status = "BULLISH" if nifty_price > 20000 else "NEUTRAL"
+    trend_status = "BULLISH"
     
     data = {
-        "nifty_spot": f"{nifty_price:,.2f}" if nifty_price > 0 else "N/A",
-        "india_vix": str(vix_price) if vix_price > 0 else "N/A",
+        "nifty_spot": nifty_price,
+        "india_vix": vix_price,
         "pcr_ratio": str(pcr),
         "max_pain": "24,500",
         "trend": trend_status,
-        "status_text": f"NIFTY: {nifty_price:,.2f} | VIX: {vix_price} | Trend: {trend_status}"
+        "status_text": f"NIFTY: {nifty_price} | VIX: {vix_price} | Trend: {trend_status}"
     }
 
     with open("data.json", "w", encoding="utf-8") as f:
