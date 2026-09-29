@@ -1,8 +1,14 @@
 {
     "nifty_spot": "22,716.20",
-    "india_vix": "13.41",
-    "pcr_ratio": "1.12",
-    "max_pain": "24,500",
-    "trend": "BULLISH",
-    "status_text": "NIFTY: 22,716.20 | VIX: 13.41 | Trend: BULLISH"
+    "nifty_rsi": "71.19",
+    "nifty_vwap": "N/A",
+    "nifty_signal": "BULLISH",
+    "banknifty_spot": "54,259.95",
+    "banknifty_rsi": "50.61",
+    "banknifty_vwap": "N/A",
+    "sensex_spot": "72,529.07",
+    "sensex_rsi": "68.81",
+    "sensex_vwap": "N/A",
+    "sensex_signal": "BULLISH",
+    "india_vix": "13.41"
 }
