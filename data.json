@@ -1,8 +1,8 @@
 {
-  "nifty_spot": "0.00",
-  "india_vix": "0.00",
-  "pcr_ratio": "0.00",
-  "max_pain": "0",
-  "trend": "NEUTRAL",
-  "status_text": "Loading Market Data..."
+    "nifty_spot": "22,716.20",
+    "india_vix": "13.41",
+    "pcr_ratio": "1.12",
+    "max_pain": "24,500",
+    "trend": "BULLISH",
+    "status_text": "NIFTY: 22,716.20 | VIX: 13.41 | Trend: BULLISH"
 }
