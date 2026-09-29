@@ -3,6 +3,7 @@ import urllib.request
 
 def get_symbol_data(symbol):
     price = 0.0
+    change_str = "+0.00"
     rsi = 50.0
     vwap = 0.0
     
@@ -12,9 +13,14 @@ def get_symbol_data(symbol):
         with urllib.request.urlopen(req, timeout=10) as response:
             res = json.loads(response.read().decode())['chart']['result'][0]
             
-            # Market Price
+            # Market Price & Previous Close
             if 'regularMarketPrice' in res['meta']:
                 price = round(res['meta']['regularMarketPrice'], 2)
+            
+            prev_close = res['meta'].get('chartPreviousClose', price)
+            if prev_close and price > 0:
+                chg = round(price - prev_close, 2)
+                change_str = f"+{chg}" if chg >= 0 else str(chg)
                 
             # Closes for RSI / VWAP
             quote = res['indicators']['quote'][0]
@@ -52,28 +58,31 @@ def get_symbol_data(symbol):
     except Exception as e:
         print(f"Error fetching {symbol}: {e}")
 
-    return price, rsi, vwap
+    return price, change_str, rsi, vwap
 
 def get_market_data():
-    nifty_price, nifty_rsi, nifty_vwap = get_symbol_data("^NSEI")
-    bank_price, bank_rsi, bank_vwap = get_symbol_data("^NSEBANK")
-    sensex_price, sensex_rsi, sensex_vwap = get_symbol_data("^BSESN")
-    vix_price, _, _ = get_symbol_data("^INDIAVIX")
+    nifty_price, nifty_change, nifty_rsi, nifty_vwap = get_symbol_data("^NSEI")
+    bank_price, bank_change, bank_rsi, bank_vwap = get_symbol_data("^NSEBANK")
+    sensex_price, sensex_change, sensex_rsi, sensex_vwap = get_symbol_data("^BSESN")
+    vix_price, _, _, _ = get_symbol_data("^INDIAVIX")
 
     nifty_sig = "BULLISH" if nifty_price > nifty_vwap and nifty_rsi > 50 else "BEARISH" if nifty_price < nifty_vwap and nifty_rsi < 50 else "SIDEWAYS"
     sensex_sig = "BULLISH" if sensex_price > sensex_vwap and sensex_rsi > 50 else "BEARISH" if sensex_price < sensex_vwap and sensex_rsi < 50 else "SIDEWAYS"
 
     data = {
         "nifty_spot": f"{nifty_price:,.2f}" if nifty_price > 0 else "N/A",
+        "nifty_change": nifty_change,
         "nifty_rsi": str(nifty_rsi),
         "nifty_vwap": f"{nifty_vwap:,.2f}" if nifty_vwap > 0 else "N/A",
         "nifty_signal": nifty_sig,
         
         "banknifty_spot": f"{bank_price:,.2f}" if bank_price > 0 else "N/A",
+        "banknifty_change": bank_change,
         "banknifty_rsi": str(bank_rsi),
         "banknifty_vwap": f"{bank_vwap:,.2f}" if bank_vwap > 0 else "N/A",
 
         "sensex_spot": f"{sensex_price:,.2f}" if sensex_price > 0 else "N/A",
+        "sensex_change": sensex_change,
         "sensex_rsi": str(sensex_rsi),
         "sensex_vwap": f"{sensex_vwap:,.2f}" if sensex_vwap > 0 else "N/A",
         "sensex_signal": sensex_sig,
