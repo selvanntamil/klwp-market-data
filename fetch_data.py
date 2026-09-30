@@ -13,7 +13,6 @@ def get_symbol_data(symbol):
         with urllib.request.urlopen(req, timeout=10) as response:
             res = json.loads(response.read().decode())['chart']['result'][0]
             
-            # Market Price & Previous Close
             if 'regularMarketPrice' in res['meta']:
                 price = round(res['meta']['regularMarketPrice'], 2)
             
@@ -22,7 +21,6 @@ def get_symbol_data(symbol):
                 chg = round(price - prev_close, 2)
                 change_str = f"+{chg}" if chg >= 0 else str(chg)
                 
-            # Closes for RSI / VWAP
             quote = res['indicators']['quote'][0]
             closes = [c for c in quote.get('close', []) if c is not None]
             highs = [h for h in quote.get('high', []) if h is not None]
@@ -33,7 +31,6 @@ def get_symbol_data(symbol):
                 if price == 0.0:
                     price = round(closes[-1], 2)
                     
-                # RSI Calculation
                 if len(closes) >= 14:
                     gains = [max(0, closes[i] - closes[i-1]) for i in range(1, len(closes))]
                     losses = [max(0, closes[i-1] - closes[i]) for i in range(1, len(closes))]
@@ -45,7 +42,6 @@ def get_symbol_data(symbol):
                     elif avg_gain > 0:
                         rsi = 100.0
 
-                # VWAP Calculation
                 cum_pv, cum_vol = 0, 0
                 min_len = min(len(closes), len(highs), len(lows), len(volumes))
                 for i in range(min_len):
@@ -65,6 +61,9 @@ def get_market_data():
     bank_price, bank_change, bank_rsi, bank_vwap = get_symbol_data("^NSEBANK")
     sensex_price, sensex_change, sensex_rsi, sensex_vwap = get_symbol_data("^BSESN")
     vix_price, _, _, _ = get_symbol_data("^INDIAVIX")
+    
+    # GIFT NIFTY Data (NSE International Exchange)
+    gift_price, gift_change, _, _ = get_symbol_data("NIFTY_FIN.NS")
 
     nifty_sig = "BULLISH" if nifty_price > nifty_vwap and nifty_rsi > 50 else "BEARISH" if nifty_price < nifty_vwap and nifty_rsi < 50 else "SIDEWAYS"
     sensex_sig = "BULLISH" if sensex_price > sensex_vwap and sensex_rsi > 50 else "BEARISH" if sensex_price < sensex_vwap and sensex_rsi < 50 else "SIDEWAYS"
@@ -75,6 +74,9 @@ def get_market_data():
         "nifty_rsi": str(nifty_rsi),
         "nifty_vwap": f"{nifty_vwap:,.2f}" if nifty_vwap > 0 else "N/A",
         "nifty_signal": nifty_sig,
+        
+        "gift_nifty": f"{gift_price:,.2f}" if gift_price > 0 else "N/A",
+        "gift_change": gift_change,
         
         "banknifty_spot": f"{bank_price:,.2f}" if bank_price > 0 else "N/A",
         "banknifty_change": bank_change,
