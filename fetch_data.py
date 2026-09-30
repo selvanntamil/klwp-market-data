@@ -13,43 +13,51 @@ def get_symbol_data(symbol):
         with urllib.request.urlopen(req, timeout=10) as response:
             res = json.loads(response.read().decode())['chart']['result'][0]
             
-            if 'regularMarketPrice' in res['meta']:
-                price = round(res['meta']['regularMarketPrice'], 2)
+            # Market Price & Previous Close
+            meta = res.get('meta', {})
+            if 'regularMarketPrice' in meta:
+                price = round(meta['regularMarketPrice'], 2)
             
-            prev_close = res['meta'].get('chartPreviousClose', price)
+            prev_close = meta.get('chartPreviousClose', price)
             if prev_close and price > 0:
                 chg = round(price - prev_close, 2)
                 change_str = f"+{chg}" if chg >= 0 else str(chg)
                 
-            quote = res['indicators']['quote'][0]
-            closes = [c for c in quote.get('close', []) if c is not None]
-            highs = [h for h in quote.get('high', []) if h is not None]
-            lows = [l for l in quote.get('low', []) if l is not None]
-            volumes = [v for v in quote.get('volume', []) if v is not None]
+            # Safe Indicator Extraction
+            indicators = res.get('indicators', {})
+            quote_list = indicators.get('quote', [{}])
+            if quote_list:
+                quote = quote_list[0]
+                closes = [c for c in quote.get('close', []) if c is not None]
+                highs = [h for h in quote.get('high', []) if h is not None]
+                lows = [l for l in quote.get('low', []) if l is not None]
+                volumes = [v for v in quote.get('volume', []) if v is not None]
 
-            if len(closes) > 0:
-                if price == 0.0:
-                    price = round(closes[-1], 2)
-                    
-                if len(closes) >= 14:
-                    gains = [max(0, closes[i] - closes[i-1]) for i in range(1, len(closes))]
-                    losses = [max(0, closes[i-1] - closes[i]) for i in range(1, len(closes))]
-                    avg_gain = sum(gains[-14:]) / 14
-                    avg_loss = sum(losses[-14:]) / 14
-                    if avg_loss > 0:
-                        rs = avg_gain / avg_loss
-                        rsi = round(100 - (100 / (1 + rs)), 2)
-                    elif avg_gain > 0:
-                        rsi = 100.0
+                if len(closes) > 0:
+                    if price == 0.0:
+                        price = round(closes[-1], 2)
+                        
+                    # RSI Calculation
+                    if len(closes) >= 14:
+                        gains = [max(0, closes[i] - closes[i-1]) for i in range(1, len(closes))]
+                        losses = [max(0, closes[i-1] - closes[i]) for i in range(1, len(closes))]
+                        avg_gain = sum(gains[-14:]) / 14
+                        avg_loss = sum(losses[-14:]) / 14
+                        if avg_loss > 0:
+                            rs = avg_gain / avg_loss
+                            rsi = round(100 - (100 / (1 + rs)), 2)
+                        elif avg_gain > 0:
+                            rsi = 100.0
 
-                cum_pv, cum_vol = 0, 0
-                min_len = min(len(closes), len(highs), len(lows), len(volumes))
-                for i in range(min_len):
-                    tp = (highs[i] + lows[i] + closes[i]) / 3
-                    cum_pv += tp * volumes[i]
-                    cum_vol += volumes[i]
-                if cum_vol > 0:
-                    vwap = round(cum_pv / cum_vol, 2)
+                    # VWAP Calculation
+                    cum_pv, cum_vol = 0, 0
+                    min_len = min(len(closes), len(highs), len(lows), len(volumes))
+                    for i in range(min_len):
+                        tp = (highs[i] + lows[i] + closes[i]) / 3
+                        cum_pv += tp * volumes[i]
+                        cum_vol += volumes[i]
+                    if cum_vol > 0:
+                        vwap = round(cum_pv / cum_vol, 2)
                     
     except Exception as e:
         print(f"Error fetching {symbol}: {e}")
@@ -62,8 +70,8 @@ def get_market_data():
     sensex_price, sensex_change, sensex_rsi, sensex_vwap = get_symbol_data("^BSESN")
     vix_price, _, _, _ = get_symbol_data("^INDIAVIX")
     
-    # GIFT NIFTY Data (NSE International Exchange)
-    gift_price, gift_change, _, _ = get_symbol_data("NIFTY_FIN.NS")
+    # GIFT NIFTY Index Proxy (^NSEI based calculation or SGX Futures)
+    gift_price, gift_change, _, _ = get_symbol_data("^NSEI")
 
     nifty_sig = "BULLISH" if nifty_price > nifty_vwap and nifty_rsi > 50 else "BEARISH" if nifty_price < nifty_vwap and nifty_rsi < 50 else "SIDEWAYS"
     sensex_sig = "BULLISH" if sensex_price > sensex_vwap and sensex_rsi > 50 else "BEARISH" if sensex_price < sensex_vwap and sensex_rsi < 50 else "SIDEWAYS"
